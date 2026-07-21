@@ -15,22 +15,35 @@ import path from "path";
 
 const app = express();
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const allowedOrigins = [
+const getAllowedOrigins = () => {
+  const origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
   ];
+  // Add production frontend URL from env (e.g. https://your-app.vercel.app)
+  if (process.env.FRONTEND_URL) {
+    origins.push(process.env.FRONTEND_URL);
+  }
+  return origins;
+};
 
+const isOriginAllowed = (origin: string): boolean => {
+  const allowedOrigins = getAllowedOrigins();
+  return (
+    allowedOrigins.includes(origin) ||
+    /^http:\/\/(?:10\.\d+|192\.168\.\d+|172\.(?:1[6-9]|2\d|3[01]))\.\d+\.\d+(?::\d+)?$/.test(origin) ||
+    /^https?:\/\/[\w-]+\.vercel\.app$/.test(origin) ||
+    /^https?:\/\/[\w-]+\.b4a\.run$/.test(origin)
+  );
+};
+
+app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
 
-  if (origin) {
-    const isAllowed = allowedOrigins.includes(origin) || 
-                      /^http:\/\/(?:10\.\d+|192\.168\.\d+|172\.(?:1[6-9]|2\d|3[01]))\.\d+\.\d+(?::\d+)?$/.test(origin);
-    if (isAllowed) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    }
+  if (origin && isOriginAllowed(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
   res.setHeader("Vary", "Origin");
@@ -64,19 +77,11 @@ const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-      ];
       if (!origin) {
         callback(null, true);
         return;
       }
-      const isAllowed = allowedOrigins.includes(origin) || 
-                        /^http:\/\/(?:10\.\d+|192\.168\.\d+|172\.(?:1[6-9]|2\d|3[01]))\.\d+\.\d+(?::\d+)?$/.test(origin);
-      if (isAllowed) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -90,7 +95,8 @@ const io = new SocketIOServer(server, {
 initSocketServer(io);
 app.set("io", io);
 
-server.listen(5000, () => {
-  console.log("Server running on port 5000 (127.0.0.1 host)");
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
