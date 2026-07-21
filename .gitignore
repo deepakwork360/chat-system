@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+build/
+
+# Environment secrets (NEVER commit these)
+.env
+.env.local
+.env.production
+.env.development
+
+# Uploaded files (user content stays local)
+chat-backend/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
