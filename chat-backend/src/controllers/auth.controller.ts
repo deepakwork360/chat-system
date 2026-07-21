@@ -56,13 +56,22 @@ export const login = async (req: Request, res: Response) => {
      }
 
      const token = jwt.sign({ userId: user.id}, process.env.JWT_SECRET as string, { expiresIn: "7d",});
+     const isProd = process.env.NODE_ENV === "production";
+
      return res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production
-      sameSite: "lax", // or strict
+      secure: isProd, // true in production
+      sameSite: isProd ? "none" : "lax", // "none" required for cross-domain Vercel <-> Back4App
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     }).json({
-      message: "Login Successfull"
+      message: "Login Successfull",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+      }
     });
      } catch (error:any) {
          console.error(error);
@@ -145,10 +154,11 @@ export const login = async (req: Request, res: Response) => {
 
   // logout route
   export const logout = async ( req: Request, res: Response ) => {
+    const isProd = process.env.NODE_ENV === "production";
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
     });
     return res.json({ message: "Logged out successfully" });
   }
