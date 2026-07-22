@@ -41,13 +41,8 @@ const isOriginAllowed = (origin: string): boolean => {
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // If no origin (e.g. mobile apps / curl) or origin is allowed, pass true
-    if (!origin || isOriginAllowed(origin)) {
-      callback(null, true);
-    } else {
-      // Pass origin dynamically to prevent CORS blocks
-      callback(null, origin);
-    }
+    // Dynamically mirror the requesting origin to prevent CORS errors on Vercel / custom domains
+    callback(null, origin || true);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
