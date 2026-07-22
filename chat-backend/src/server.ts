@@ -13,6 +13,13 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import conversationRoutes from "./routes/conversation.routes";
 import messagesRoutes from "./routes/messages.routes";
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception thrown:", err);
+});
 
 const app = express();
 
