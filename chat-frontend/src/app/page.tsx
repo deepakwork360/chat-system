@@ -33,7 +33,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-lg tracking-tight text-foreground">S1mple Chat</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                 v1.0 Live
               </span>
             </div>
