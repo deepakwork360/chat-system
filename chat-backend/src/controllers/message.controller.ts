@@ -33,8 +33,14 @@ export const sendMessage = async (req: Request, res: Response) => {
     }
 
     if (req.file) {
-      // It's a file upload
-      fileUrl = `http://localhost:5000/uploads/messages/${req.file.filename}`;
+      // It's a file upload (Cloudinary URL or local relative path)
+      if (req.file.path && (req.file.path.startsWith("http://") || req.file.path.startsWith("https://"))) {
+        fileUrl = req.file.path;
+      } else if (req.file.filename) {
+        fileUrl = `/uploads/messages/${req.file.filename}`;
+      } else {
+        fileUrl = (req.file as any).secure_url || (req.file as any).url || null;
+      }
       fileName = req.file.originalname;
       fileSize = req.file.size;
       messageType = req.file.mimetype.startsWith("image/") 

@@ -115,7 +115,13 @@ export const login = async (req: Request, res: Response) => {
 
       let avatarUrl: string | null = null;
       if (req.file) {
-        avatarUrl = `http://localhost:5000/uploads/avatars/${req.file.filename}`;
+        if (req.file.path && (req.file.path.startsWith("http://") || req.file.path.startsWith("https://"))) {
+          avatarUrl = req.file.path;
+        } else if (req.file.filename) {
+          avatarUrl = `/uploads/avatars/${req.file.filename}`;
+        } else {
+          avatarUrl = (req.file as any).secure_url || (req.file as any).url || null;
+        }
       }
 
       let query = "";
