@@ -99,30 +99,34 @@ export const getConversations = async (req: Request, res: Response) => {
       `
       SELECT
         c.id,
-        c.is_group,
+        COALESCE(c.is_group, false) AS is_group,
         c.name AS group_name,
         c.avatar_url AS group_avatar_url,
         c.description AS group_description,
         c.created_by AS group_created_by,
         c.created_at,
         c.updated_at,
-        CASE WHEN c.is_group = false THEN u.id ELSE NULL END AS other_user_id,
-        CASE WHEN c.is_group = false THEN u.name ELSE NULL END AS other_user_name,
-        CASE WHEN c.is_group = false THEN u.email ELSE NULL END AS other_user_email,
-        CASE WHEN c.is_group = false THEN u.avatar_url ELSE NULL END AS other_user_avatar_url,
+        CASE WHEN COALESCE(c.is_group, false) = false THEN u.id ELSE NULL END AS other_user_id,
+        CASE WHEN COALESCE(c.is_group, false) = false THEN u.name ELSE NULL END AS other_user_name,
+        CASE WHEN COALESCE(c.is_group, false) = false THEN u.email ELSE NULL END AS other_user_email,
+        CASE WHEN COALESCE(c.is_group, false) = false THEN u.avatar_url ELSE NULL END AS other_user_avatar_url,
         latest_message.content AS latest_message,
         latest_message.created_at AS latest_message_created_at,
-        (
-          SELECT COUNT(*)::int
-          FROM messages
-          WHERE conversation_id = c.id
-          AND sender_id != $1
-          AND is_read = false
+        COALESCE(
+          (
+            SELECT COUNT(*)::int
+            FROM messages m
+            WHERE m.conversation_id = c.id
+            AND m.sender_id != $1
+            AND m.is_read = false
+          ), 0
         ) AS unread_count,
-        (
-          SELECT COUNT(*)::int
-          FROM conversation_members
-          WHERE conversation_id = c.id
+        COALESCE(
+          (
+            SELECT COUNT(*)::int
+            FROM conversation_members cm
+            WHERE cm.conversation_id = c.id
+          ), 0
         ) AS member_count
       FROM conversations c
       JOIN conversation_members my_member
@@ -130,10 +134,10 @@ export const getConversations = async (req: Request, res: Response) => {
       LEFT JOIN conversation_members other_member
         ON other_member.conversation_id = c.id
         AND other_member.user_id != $1
-        AND c.is_group = false
+        AND COALESCE(c.is_group, false) = false
       LEFT JOIN users u
         ON u.id = other_member.user_id
-        AND c.is_group = false
+        AND COALESCE(c.is_group, false) = false
       LEFT JOIN LATERAL (
         SELECT content, created_at
         FROM messages
@@ -152,7 +156,7 @@ export const getConversations = async (req: Request, res: Response) => {
       conversations: result.rows,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getConversations:", error);
 
     return res.status(500).json({
       success: false,
