@@ -1260,10 +1260,12 @@ export default function ChatDashboard() {
   const handleLogout = async () => {
     try {
       await logout();
+      localStorage.removeItem("token");
       toast.success("Successfully logged out");
       router.push("/login");
     } catch (err) {
       console.error("Logout failed:", err);
+      localStorage.removeItem("token");
       toast.error("Logout failed");
     }
   };

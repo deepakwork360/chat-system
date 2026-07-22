@@ -25,10 +25,14 @@ export default function Login() {
       setLoading(true);
       setError("");
 
-      await login({
+      const res = await login({
         email,
         password,
       });
+
+      if (res.token) {
+        localStorage.setItem("token", res.token);
+      }
 
       toast.success("Welcome back!");
       router.push("/chat");
