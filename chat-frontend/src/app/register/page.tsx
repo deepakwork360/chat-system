@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,13 @@ import { toast } from "sonner";
 
 export default function Register() {
   const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.replace("/chat");
+    }
+  }, [router]);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
