@@ -40,18 +40,16 @@ const isOriginAllowed = (origin: string): boolean => {
 };
 
 const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    // Dynamically mirror the requesting origin to prevent CORS errors on Vercel / custom domains
-    callback(null, origin || true);
-  },
+  origin: true,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   optionsSuccessStatus: 204,
 };
 
-// Enable CORS for all routes and preflight OPTIONS requests
+// Enable CORS for all routes and handle preflight OPTIONS
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
