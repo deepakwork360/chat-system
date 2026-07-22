@@ -1,17 +1,18 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
-import { initSocketServer } from "./socket";
+import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+
+import { initSocketServer } from "./socket";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import conversationRoutes from "./routes/conversation.routes";
 import messagesRoutes from "./routes/messages.routes";
-
-import path from "path";
 
 const app = express();
 
@@ -22,7 +23,6 @@ const getAllowedOrigins = () => {
     "http://localhost:3001",
     "http://127.0.0.1:3001",
   ];
-  // Add production frontend URL from env (e.g. https://your-app.vercel.app)
   if (process.env.FRONTEND_URL) {
     origins.push(process.env.FRONTEND_URL);
   }
@@ -39,32 +39,25 @@ const isOriginAllowed = (origin: string): boolean => {
   );
 };
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const origin = req.headers.origin;
-
-  if (origin) {
-    if (isOriginAllowed(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // If no origin (e.g. mobile apps / curl) or origin is allowed, pass true
+    if (!origin || isOriginAllowed(origin)) {
+      callback(null, true);
     } else {
-      // Fallback: reflect origin if FRONTEND_URL matches or general vercel domain
-      res.setHeader("Access-Control-Allow-Origin", origin);
+      // Pass origin dynamically to prevent CORS blocks
+      callback(null, origin);
     }
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-  }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  optionsSuccessStatus: 204,
+};
 
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") {
-    res.status(204).end();
-    return;
-  }
-
-  next();
-});
+// Enable CORS for all routes and preflight OPTIONS requests
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -83,21 +76,7 @@ app.get("/", (req: Request, res: Response) => {
 
 const server = createServer(app);
 const io = new SocketIOServer(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      if (isOriginAllowed(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-  }
+  cors: corsOptions,
 });
 
 initSocketServer(io);
@@ -107,4 +86,3 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
