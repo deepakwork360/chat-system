@@ -49,10 +49,90 @@ import {
   Check,
   ArrowLeft,
   ListChecks,
-  Users
+  Users,
+  Sun,
+  Moon,
+  Palette
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 import { initSocket, getSocket, disconnectSocket } from "@/lib/socket";
+
+export type ThemePaletteId = "indigo" | "emerald" | "sunset" | "violet" | "ocean" | "crimson";
+
+export interface ThemePalette {
+  id: ThemePaletteId;
+  name: string;
+  gradientClass: string;
+  btnGradientClass: string;
+  previewGradient: string;
+  glowShadow: string;
+  darkPageBg: string;
+  lightPageBg: string;
+}
+
+export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
+  indigo: {
+    id: "indigo",
+    name: "Royal Indigo",
+    gradientClass: "bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600",
+    btnGradientClass: "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white",
+    previewGradient: "from-indigo-600 via-indigo-700 to-purple-600",
+    glowShadow: "shadow-indigo-600/25",
+    darkPageBg: "bg-gradient-to-br from-slate-950 via-zinc-950 to-indigo-950/40",
+    lightPageBg: "bg-gradient-to-br from-indigo-50/70 via-slate-50 to-purple-50/50"
+  },
+  emerald: {
+    id: "emerald",
+    name: "Cyber Emerald",
+    gradientClass: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600",
+    btnGradientClass: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white",
+    previewGradient: "from-emerald-600 via-teal-600 to-cyan-600",
+    glowShadow: "shadow-emerald-600/25",
+    darkPageBg: "bg-gradient-to-br from-zinc-950 via-slate-950 to-emerald-950/40",
+    lightPageBg: "bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-slate-50"
+  },
+  sunset: {
+    id: "sunset",
+    name: "Sunset Flare",
+    gradientClass: "bg-gradient-to-r from-rose-600 via-orange-600 to-amber-600",
+    btnGradientClass: "bg-gradient-to-r from-rose-600 via-orange-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white",
+    previewGradient: "from-rose-600 via-orange-600 to-amber-600",
+    glowShadow: "shadow-rose-600/25",
+    darkPageBg: "bg-gradient-to-br from-zinc-950 via-slate-950 to-rose-950/40",
+    lightPageBg: "bg-gradient-to-br from-rose-50/70 via-orange-50/40 to-slate-50"
+  },
+  violet: {
+    id: "violet",
+    name: "Midnight Fuchsia",
+    gradientClass: "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600",
+    btnGradientClass: "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white",
+    previewGradient: "from-purple-600 via-fuchsia-600 to-pink-600",
+    glowShadow: "shadow-purple-600/25",
+    darkPageBg: "bg-gradient-to-br from-slate-950 via-zinc-950 to-purple-950/40",
+    lightPageBg: "bg-gradient-to-br from-purple-50/70 via-fuchsia-50/40 to-slate-50"
+  },
+  ocean: {
+    id: "ocean",
+    name: "Ocean Sapphire",
+    gradientClass: "bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500",
+    btnGradientClass: "bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white",
+    previewGradient: "from-blue-600 via-sky-600 to-cyan-500",
+    glowShadow: "shadow-blue-600/25",
+    darkPageBg: "bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950/40",
+    lightPageBg: "bg-gradient-to-br from-sky-50/70 via-blue-50/40 to-slate-50"
+  },
+  crimson: {
+    id: "crimson",
+    name: "Crimson Ruby",
+    gradientClass: "bg-gradient-to-r from-red-600 via-rose-700 to-pink-700",
+    btnGradientClass: "bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white",
+    previewGradient: "from-red-600 via-rose-700 to-pink-700",
+    glowShadow: "shadow-red-600/25",
+    darkPageBg: "bg-gradient-to-br from-zinc-950 via-slate-950 to-red-950/40",
+    lightPageBg: "bg-gradient-to-br from-red-50/70 via-rose-50/40 to-slate-50"
+  }
+};
 
 // Voice Message player component for premium inline audio rendering
 function VoiceMessagePlayer({ src, isCurrentUser }: { src: string; isCurrentUser: boolean }) {
@@ -198,18 +278,78 @@ function VoiceMessagePlayer({ src, isCurrentUser }: { src: string; isCurrentUser
 
 const getMediaUrl = (url: string | null | undefined): string => {
   if (!url) return "";
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    return url
-      .replace("localhost:5000", `${hostname}:5000`)
-      .replace("127.0.0.1:5000", `${hostname}:5000`);
+
+  // If url is a local browser blob or data URI preview
+  if (url.startsWith("blob:") || url.startsWith("data:")) {
+    return url;
   }
-  return url;
+
+  // Determine production backend base URL
+  const backendBase = process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")
+    : typeof window !== "undefined"
+    ? `http://${window.location.hostname}:5000`
+    : "http://localhost:5000";
+
+  // Strip legacy localhost:5000 / 127.0.0.1:5000 prefixes if present
+  let cleanUrl = url
+    .replace(/^https?:\/\/localhost:5000/, "")
+    .replace(/^https?:\/\/127\.0\.0\.1:5000/, "");
+
+  // If cleanUrl is relative path (/uploads/...)
+  if (cleanUrl.startsWith("/")) {
+    return `${backendBase}${cleanUrl}`;
+  }
+
+  // If cleanUrl starts with uploads/
+  if (cleanUrl.startsWith("uploads/")) {
+    return `${backendBase}/${cleanUrl}`;
+  }
+
+  // If it's already an absolute external HTTP/HTTPS URL
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  return `${backendBase}/${cleanUrl}`;
 };
 
 export default function ChatDashboard() {
   const router = useRouter();
   
+  // Theme & Appearance states (using next-themes)
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const themeMode: "dark" | "light" = mounted 
+    ? ((resolvedTheme || theme) === "light" ? "light" : "dark") 
+    : "dark";
+
+  const [activePaletteId, setActivePaletteId] = useState<ThemePaletteId>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme_palette") as ThemePaletteId) || "indigo";
+    }
+    return "indigo";
+  });
+
+  const currentPalette = THEME_PALETTES[activePaletteId] || THEME_PALETTES.indigo;
+
+  const handleSelectPalette = (id: ThemePaletteId) => {
+    setActivePaletteId(id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme_palette", id);
+    }
+  };
+
+  const handleToggleThemeMode = () => {
+    const nextMode = themeMode === "dark" ? "light" : "dark";
+    setTheme(nextMode);
+  };
+
   // Auth state
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -250,6 +390,7 @@ export default function ChatDashboard() {
 
   // Profile Modal states
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<"profile" | "appearance">("profile");
   const [profileName, setProfileName] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
   const [profileAvatarFile, setProfileAvatarFile] = useState<File | null>(null);
@@ -335,8 +476,9 @@ export default function ChatDashboard() {
         setConversationsLoading(true);
       }
       const data = await getConversations();
-      setConversations(data);
-      return data;
+      const uniqueData = Array.from(new Map((data || []).map((c: Conversation) => [c.id, c])).values());
+      setConversations(uniqueData);
+      return uniqueData;
     } catch (err) {
       console.error("Failed to load conversations:", err);
       toast.error("Failed to load conversations");
@@ -652,7 +794,7 @@ export default function ChatDashboard() {
 
   // Scroll messages to bottom
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   // Search for users
@@ -1070,12 +1212,21 @@ export default function ChatDashboard() {
           setIsLocationLoading(false);
         }
       },
-      (err) => {
-        console.error("Location error:", err);
-        toast.error("Failed to retrieve location. Please grant location permissions.");
+      (err: GeolocationPositionError) => {
+        console.error("Location error:", err.code, err.message);
         setIsLocationLoading(false);
+        
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error("Location permission denied. Please click the lock icon 🔒 in your browser address bar to allow Location access.");
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          toast.error("Location unavailable. Please turn on Location/GPS in your Windows system settings.");
+        } else if (err.code === err.TIMEOUT) {
+          toast.error("Location request timed out. Please try again.");
+        } else {
+          toast.error("Unable to retrieve location. Please check your browser location permissions.");
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
     );
   };
 
@@ -1313,7 +1464,11 @@ export default function ChatDashboard() {
   }
 
   return (
-    <main className="h-dvh w-full bg-background flex flex-col overflow-hidden select-none font-sans">
+    <main className={`h-dvh w-full flex flex-col overflow-hidden select-none font-sans transition-all duration-500 ${
+      themeMode === "dark" 
+        ? `${currentPalette.darkPageBg} text-foreground` 
+        : `${currentPalette.lightPageBg} text-slate-900`
+    }`}>
       <div className="w-full flex-1 min-h-0 flex overflow-hidden relative">
         
         {/* SIDEBAR */}
@@ -1321,7 +1476,11 @@ export default function ChatDashboard() {
           activeConversation ? "hidden md:flex md:w-80" : "w-full md:w-80 flex"
         }`}>
           {/* Header (Profile Details, Settings & Logout) */}
-          <header className="p-4 border-b border-border flex items-center justify-between">
+          <header className={`p-4 flex items-center justify-between shrink-0 backdrop-blur-xl z-10 transition-colors duration-300 ${
+            themeMode === "dark" 
+              ? "bg-gradient-to-r from-slate-900/90 via-zinc-900/95 to-slate-900/90 border-b border-border/40 text-foreground" 
+              : "bg-gradient-to-r from-white/95 via-slate-50/95 to-white/95 border-b border-slate-200/80 text-slate-900 shadow-sm"
+          }`}>
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 border border-border">
                 {currentUser?.avatar_url ? (
@@ -1364,7 +1523,7 @@ export default function ChatDashboard() {
                   setProfileAvatarPreview(currentUser?.avatar_url || "");
                   setIsProfileModalOpen(true);
                 }}
-                title="Profile Settings"
+                title="Workspace Settings"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -1383,10 +1542,14 @@ export default function ChatDashboard() {
           {/* User Search Container */}
           <div className="p-3" ref={searchContainerRef}>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className={`absolute left-3 top-2.5 h-4 w-4 ${themeMode === "dark" ? "text-slate-400" : "text-slate-500"}`} />
               <Input
                 placeholder="Search new users..."
-                className="pl-9 h-9 text-sm bg-background/50 border-border focus:ring-1 focus:ring-primary/40 rounded-xl"
+                className={`pl-9 h-9 text-xs rounded-xl border ${
+                  themeMode === "dark" 
+                    ? "bg-slate-900/60 border-slate-800 text-slate-100 placeholder:text-slate-400 focus:ring-1 focus:ring-primary/40" 
+                    : "bg-white/90 border-slate-300 text-slate-900 placeholder:text-slate-500 shadow-sm focus:ring-1 focus:ring-slate-400"
+                }`}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -1403,7 +1566,11 @@ export default function ChatDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto bg-card border border-border shadow-xl rounded-xl z-20 p-2 custom-scrollbar"
+                    className={`absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto border shadow-xl rounded-xl z-20 p-2 custom-scrollbar ${
+                      themeMode === "dark" 
+                        ? "bg-slate-900 border-slate-800 text-slate-100" 
+                        : "bg-white border-slate-200 text-slate-900 shadow-slate-300/40"
+                    }`}
                   >
                     {isSearching ? (
                       <div className="flex items-center justify-center py-4 text-xs text-muted-foreground gap-2">
@@ -1414,7 +1581,9 @@ export default function ChatDashboard() {
                         <button
                           key={user.id}
                           onClick={() => handleStartChat(user)}
-                          className="w-full flex items-center justify-between p-2 hover:bg-muted/80 rounded-lg text-left transition-colors cursor-pointer"
+                          className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors cursor-pointer ${
+                            themeMode === "dark" ? "hover:bg-slate-800/80" : "hover:bg-slate-100 text-slate-900"
+                          }`}
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="relative shrink-0">
@@ -1448,9 +1617,11 @@ export default function ChatDashboard() {
           </div>
 
           {/* Conversations List */}
-          <ScrollArea className="flex-1 custom-scrollbar">
+          <ScrollArea className="flex-1 min-h-0 h-full custom-scrollbar overflow-y-auto">
             <div className="px-2 pb-4 space-y-1">
-              <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider ${
+                themeMode === "dark" ? "text-slate-400" : "text-slate-600 font-extrabold"
+              }`}>
                 Conversations
               </div>
               
@@ -1465,15 +1636,17 @@ export default function ChatDashboard() {
                     const isActive = activeConversation?.id === conv.id;
                     return (
                       <motion.button
-                        key={conv.id}
+                        key={`conv-${conv.id}-${index}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         onClick={() => setActiveConversation(conv)}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer text-left ${
                           isActive 
-                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[0.98]" 
-                            : "hover:bg-muted/65 text-muted-foreground hover:text-foreground"
+                            ? `${currentPalette.gradientClass} text-white shadow-lg ${currentPalette.glowShadow} scale-[0.99] font-medium` 
+                            : themeMode === "dark"
+                              ? "hover:bg-white/5 text-slate-300 hover:text-white border border-transparent"
+                              : "hover:bg-slate-200/50 text-slate-800 hover:text-slate-900 border border-transparent"
                         }`}
                       >
                         <div className="relative shrink-0">
@@ -1487,7 +1660,7 @@ export default function ChatDashboard() {
                             ) : null}
                             <AvatarFallback className={`font-bold text-xs ${
                               isActive 
-                                ? "bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30" 
+                                ? "bg-white/20 text-white border-white/30" 
                                 : getAvatarThemeClass(conv.is_group ? (conv.group_name || "Group") : (conv.other_user_name || "User"))
                             }`}>
                               {getInitials(conv.is_group ? (conv.group_name || "Group") : (conv.other_user_name || "User"))}
@@ -1500,17 +1673,35 @@ export default function ChatDashboard() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className={`font-semibold text-xs truncate ${isActive ? "text-primary-foreground" : "text-foreground"}`}>
+                            <span className={`font-semibold text-xs truncate ${
+                              isActive 
+                                ? "text-white font-bold" 
+                                : themeMode === "dark" 
+                                  ? "text-slate-100" 
+                                  : "text-slate-900 font-bold"
+                            }`}>
                               {conv.is_group ? (conv.group_name || "Group Chat") : conv.other_user_name}
                             </span>
                             {conv.latest_message_created_at && (
-                              <span className={`text-[9px] ${isActive ? "text-primary-foreground/75" : "text-muted-foreground"}`}>
+                              <span className={`text-[9px] ${
+                                isActive 
+                                  ? "text-white/90 font-medium" 
+                                  : themeMode === "dark" 
+                                    ? "text-slate-400" 
+                                    : "text-slate-500 font-medium"
+                              }`}>
                                 {new Date(conv.latest_message_created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center justify-between mt-0.5">
-                            <p className={`text-[11px] truncate flex-1 pr-1 ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                            <p className={`text-[11px] truncate flex-1 pr-1 ${
+                              isActive 
+                                ? "text-white/85" 
+                                : themeMode === "dark" 
+                                  ? "text-slate-400" 
+                                  : "text-slate-600 font-medium"
+                            }`}>
                               {conv.latest_message || "No messages yet"}
                             </p>
                             {conv.unread_count !== undefined && conv.unread_count > 0 && !isActive && (
@@ -1549,7 +1740,11 @@ export default function ChatDashboard() {
                 className="w-full h-full flex flex-col overflow-hidden"
               >
                 {/* Active Chat Header */}
-                <header className="p-4 border-b border-border flex items-center justify-between bg-card/20 backdrop-blur-md">
+                <header className={`p-4 flex items-center justify-between backdrop-blur-xl shrink-0 z-20 sticky top-0 transition-colors duration-300 ${
+                  themeMode === "dark" 
+                    ? "bg-gradient-to-r from-slate-900/95 via-zinc-900/90 to-slate-900/95 border-b border-border/40 text-foreground shadow-md" 
+                    : "bg-gradient-to-r from-white/95 via-slate-50/95 to-white/95 border-b border-slate-200/80 text-slate-900 shadow-sm"
+                }`}>
                   <div className="flex items-center gap-3">
                     {/* Back Button for Mobile layouts */}
                     <Button
@@ -1562,7 +1757,7 @@ export default function ChatDashboard() {
                       <ArrowLeft className="h-4.5 w-4.5" />
                     </Button>
                     <div className="relative shrink-0">
-                      <Avatar className="h-10 w-10 border">
+                      <Avatar className="h-10 w-10 border border-border/20 shadow-sm">
                         {activeConversation.is_group ? (
                           activeConversation.group_avatar_url ? (
                             <AvatarImage src={getMediaUrl(activeConversation.group_avatar_url)} alt={activeConversation.group_name || "Group"} className="object-cover" />
@@ -1579,7 +1774,7 @@ export default function ChatDashboard() {
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-sm text-foreground">
+                      <span className="font-semibold text-sm text-foreground tracking-tight">
                         {activeConversation.is_group ? (activeConversation.group_name || "Group Chat") : activeConversation.other_user_name}
                       </span>
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -1589,7 +1784,7 @@ export default function ChatDashboard() {
                             <span>•</span>
                             <button
                               onClick={handleShowGroupMembers}
-                              className="text-primary hover:text-primary/80 font-bold transition-all hover:underline cursor-pointer active:scale-95 flex items-center gap-1 select-none"
+                              className="text-indigo-400 hover:text-indigo-300 font-bold transition-all hover:underline cursor-pointer active:scale-95 flex items-center gap-1 select-none bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20 shadow-sm"
                               title="Click to view group members"
                             >
                               {activeConversation.member_count || 1} members
@@ -1635,7 +1830,7 @@ export default function ChatDashboard() {
 
                           return (
                             <motion.div
-                              key={msg.id || index}
+                              key={`msg-${msg.id}-${index}`}
                               initial={{ opacity: 0, y: 15 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ type: "spring", stiffness: 350, damping: 25 }}
@@ -1750,8 +1945,8 @@ export default function ChatDashboard() {
                                         msg.message_type === "deleted"
                                           ? "bg-muted/40 text-muted-foreground/70 border border-dashed border-border/60 rounded-2xl"
                                           : isCurrentUser 
-                                            ? "bg-primary text-primary-foreground rounded-tr-none font-medium" 
-                                            : "bg-muted/80 text-foreground rounded-tl-none border border-border/40"
+                                            ? `${currentPalette.gradientClass} text-white rounded-tr-none font-medium shadow-md ${currentPalette.glowShadow} border border-white/20` 
+                                            : "bg-gradient-to-br from-card/90 via-muted/80 to-card/90 text-foreground rounded-tl-none border border-border/50 shadow-sm"
                                       }`}
                                     >
                                   
@@ -1965,7 +2160,11 @@ export default function ChatDashboard() {
                 </AnimatePresence>
 
                 {/* Bottom Input Controls / Multi-Select Panel */}
-                <footer className="p-4 border-t border-border bg-card/20 backdrop-blur-md relative min-h-[72px] flex items-center">
+                <footer className={`p-4 border-t relative min-h-[72px] flex items-center shrink-0 z-20 transition-colors duration-300 ${
+                  themeMode === "dark" 
+                    ? "bg-slate-900/90 border-border/40 text-foreground" 
+                    : "bg-white/95 border-slate-200/90 shadow-sm text-slate-900"
+                }`}>
                   <AnimatePresence mode="wait">
                     {isSelectionMode ? (
                       <motion.div
@@ -2151,7 +2350,11 @@ export default function ChatDashboard() {
                               <Input
                                 ref={messageInputRef}
                                 placeholder={attachedFile ? "Add description (optional)..." : "Type a message..."}
-                                className="flex-1 bg-background/50 border-border focus:ring-1 focus:ring-primary/40 rounded-xl py-5 text-sm"
+                                className={`flex-1 rounded-xl py-5 text-sm border transition-colors ${
+                                  themeMode === "dark" 
+                                    ? "bg-slate-950/60 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:ring-1 focus:ring-primary/40" 
+                                    : "bg-slate-100/90 border-slate-300 text-slate-900 placeholder:text-slate-500 focus:ring-1 focus:ring-slate-400 font-medium"
+                                }`}
                                 value={newMessage}
                                 onChange={handleInputChange}
                                 disabled={sendingMessage}
@@ -2162,7 +2365,7 @@ export default function ChatDashboard() {
                                 <Button 
                                   type="submit" 
                                   size="icon" 
-                                  className="h-10 w-10 shrink-0 cursor-pointer rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground shadow-md transition-all active:scale-95"
+                                  className={`h-10 w-10 shrink-0 cursor-pointer rounded-xl ${currentPalette.btnGradientClass} shadow-md ${currentPalette.glowShadow} transition-all hover:scale-105 active:scale-95 border-0`}
                                   disabled={sendingMessage}
                                 >
                                   {sendingMessage ? (
@@ -2237,10 +2440,10 @@ export default function ChatDashboard() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ type: "spring", duration: 0.35 }}
-              className="w-full max-w-md bg-card border border-border shadow-2xl rounded-2xl overflow-hidden relative z-10 p-6 flex flex-col gap-5"
+              className="w-full max-w-md bg-card border border-border shadow-2xl rounded-2xl overflow-hidden relative z-10 p-6 flex flex-col gap-4"
             >
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-foreground">Edit Profile</h3>
+              <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                <h3 className="font-bold text-lg text-foreground">Workspace Settings</h3>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -2251,83 +2454,177 @@ export default function ChatDashboard() {
                 </Button>
               </div>
 
-              <form onSubmit={handleUpdateProfile} className="flex flex-col gap-4">
-                
-                {/* Avatar upload sector */}
-                <div className="flex flex-col items-center gap-2">
-                  <input 
-                    type="file" 
-                    ref={avatarInputRef} 
-                    className="hidden" 
-                    onChange={handleAvatarFileChange} 
-                    accept="image/*"
-                  />
-                  <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                    <Avatar className="h-20 w-20 border-2 border-primary/20 group-hover:opacity-85 transition-opacity">
-                      {profileAvatarPreview ? (
-                        <AvatarImage src={getMediaUrl(profileAvatarPreview)} className="object-cover" />
-                      ) : null}
-                      <AvatarFallback className={`font-bold text-xl ${getAvatarThemeClass(currentUser?.name || "User")}`}>
-                        {currentUser ? getInitials(currentUser.name) : "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    {/* Hover text block */}
-                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">Change</span>
+              {/* Navigation Tab Switcher */}
+              <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border/40">
+                <button
+                  type="button"
+                  onClick={() => setSettingsTab("profile")}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    settingsTab === "profile" 
+                      ? `${currentPalette.gradientClass} text-white shadow-sm` 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Settings className="h-3.5 w-3.5" /> Edit Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettingsTab("appearance")}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    settingsTab === "appearance" 
+                      ? `${currentPalette.gradientClass} text-white shadow-sm` 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Palette className="h-3.5 w-3.5" /> Appearance & Theme
+                </button>
+              </div>
+
+              {settingsTab === "profile" ? (
+                <form onSubmit={handleUpdateProfile} className="flex flex-col gap-4 pt-1">
+                  {/* Avatar upload sector */}
+                  <div className="flex flex-col items-center gap-2">
+                    <input 
+                      type="file" 
+                      ref={avatarInputRef} 
+                      className="hidden" 
+                      onChange={handleAvatarFileChange} 
+                      accept="image/*"
+                    />
+                    <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                      <Avatar className="h-20 w-20 border-2 border-primary/20 group-hover:opacity-85 transition-opacity">
+                        {profileAvatarPreview ? (
+                          <AvatarImage src={getMediaUrl(profileAvatarPreview)} className="object-cover" />
+                        ) : null}
+                        <AvatarFallback className={`font-bold text-xl ${getAvatarThemeClass(currentUser?.name || "User")}`}>
+                          {currentUser ? getInitials(currentUser.name) : "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">Change</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Upload Profile Photo</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Name</label>
+                    <Input 
+                      value={profileName} 
+                      onChange={(e) => setProfileName(e.target.value)} 
+                      required 
+                      className="h-10 text-sm border-border focus:ring-1"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
+                    <Input 
+                      type="email" 
+                      value={profileEmail} 
+                      disabled
+                      className="h-10 text-sm border-border bg-muted/50 cursor-not-allowed select-none opacity-80"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end mt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="cursor-pointer rounded-xl h-10 text-sm"
+                      onClick={() => setIsProfileModalOpen(false)}
+                      disabled={isSavingProfile}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className={`cursor-pointer rounded-xl h-10 text-sm px-6 ${currentPalette.btnGradientClass} font-semibold border-0 shadow-md`}
+                      disabled={isSavingProfile}
+                    >
+                      {isSavingProfile ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...
+                        </>
+                      ) : (
+                        "Save Profile"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex flex-col gap-4 pt-1">
+                  <div className="flex items-center justify-between bg-muted/30 p-3 rounded-2xl border border-border/40">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-foreground">Theme Mode</span>
+                      <span className="text-[10px] text-muted-foreground">Switch between light & dark interface</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-muted/80 p-1 rounded-xl border border-border/40">
+                      <button
+                        type="button"
+                        onClick={handleToggleThemeMode}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          themeMode === "dark" 
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Moon className="h-3.5 w-3.5 text-indigo-400" /> Dark
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleToggleThemeMode}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          themeMode === "light" 
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Sun className="h-3.5 w-3.5 text-amber-500" /> Light
+                      </button>
                     </div>
                   </div>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Upload Profile Photo</span>
-                </div>
 
-                {/* Form fields */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Name</label>
-                  <Input 
-                    value={profileName} 
-                    onChange={(e) => setProfileName(e.target.value)} 
-                    required 
-                    className="h-10 text-sm border-border focus:ring-1"
-                  />
-                </div>
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-bold text-foreground">Gradient Color Accent</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.values(THEME_PALETTES).map((palette) => {
+                        const isSelected = activePaletteId === palette.id;
+                        return (
+                          <button
+                            key={palette.id}
+                            type="button"
+                            onClick={() => handleSelectPalette(palette.id)}
+                            className={`flex flex-col gap-1.5 p-2 rounded-xl border transition-all cursor-pointer relative ${
+                              isSelected 
+                                ? "border-primary ring-2 ring-primary/30 bg-primary/5 shadow-sm scale-[1.02]" 
+                                : "border-border/60 hover:border-border hover:bg-muted/30"
+                            }`}
+                          >
+                            <div className={`h-6 w-full rounded-lg bg-gradient-to-r ${palette.previewGradient} flex items-center justify-end pr-1.5 shadow-sm`}>
+                              {isSelected && <Check className="h-3.5 w-3.5 text-white font-bold stroke-[3]" />}
+                            </div>
+                            <span className="text-[10px] font-bold text-foreground text-center truncate">{palette.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
-                  <Input 
-                    type="email" 
-                    value={profileEmail} 
-                    disabled
-                    className="h-10 text-sm border-border bg-muted/50 cursor-not-allowed select-none opacity-80"
-                  />
+                  <div className="flex items-center justify-between pt-3 border-t border-border/40 mt-1">
+                    <span className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1">
+                      <Check className="h-3.5 w-3.5" /> Saved & applied live
+                    </span>
+                    <Button
+                      type="button"
+                      className={`cursor-pointer rounded-xl h-9 text-xs px-5 ${currentPalette.btnGradientClass} font-semibold border-0 shadow-md`}
+                      onClick={() => setIsProfileModalOpen(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
                 </div>
-
-                {/* Action buttons */}
-                <div className="flex gap-2 justify-end mt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="cursor-pointer rounded-xl h-10 text-sm"
-                    onClick={() => setIsProfileModalOpen(false)}
-                    disabled={isSavingProfile}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="cursor-pointer rounded-xl h-10 text-sm px-6 bg-primary text-primary-foreground font-semibold"
-                    disabled={isSavingProfile}
-                  >
-                    {isSavingProfile ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...
-                      </>
-                    ) : (
-                      "Save Changes"
-                    )}
-                  </Button>
-                </div>
-
-              </form>
+              )}
             </motion.div>
           </div>
         )}
