@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 
 import { initSocketServer } from "./socket";
+import { db } from "./config/db";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import conversationRoutes from "./routes/conversation.routes";
@@ -92,3 +93,23 @@ const PORT = Number(process.env.PORT) || 5000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT} (0.0.0.0)`);
 });
+
+const gracefulShutdown = (signal: string) => {
+  console.log(`${signal} signal received: closing HTTP server & DB connections`);
+  server.close(() => {
+    console.log("HTTP server closed.");
+    db.end(() => {
+      console.log("PostgreSQL pool closed.");
+      process.exit(0);
+    });
+  });
+
+  // Force exit after 5s if connections linger
+  setTimeout(() => {
+    console.error("Forced shutdown after timeout.");
+    process.exit(1);
+  }, 5000);
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
