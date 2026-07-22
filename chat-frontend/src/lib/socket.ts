@@ -20,9 +20,13 @@ const getSocketUrl = (): string => {
 
 export const initSocket = (): Socket => {
   if (!socket) {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     socket = io(getSocketUrl(), {
       withCredentials: true,
       autoConnect: false,
+      auth: {
+        token: token || "",
+      },
     });
   }
   return socket;

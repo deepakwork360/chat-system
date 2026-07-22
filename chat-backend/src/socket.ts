@@ -8,24 +8,32 @@ export const initSocketServer = (io: SocketIOServer) => {
   // Authentication middleware
   io.use((socket: Socket, next) => {
     try {
-      const cookieHeader = socket.handshake.headers.cookie;
-      if (!cookieHeader) {
-        return next(new Error("Authentication error: No cookies provided"));
+      let token: string | undefined;
+
+      // 1. Try to extract token from handshake auth or query params (localStorage client approach)
+      if (socket.handshake.auth && socket.handshake.auth.token) {
+        token = socket.handshake.auth.token;
+      } else if (socket.handshake.query && typeof socket.handshake.query.token === "string") {
+        token = socket.handshake.query.token;
+      } else if (socket.handshake.headers.authorization) {
+        token = socket.handshake.headers.authorization.split(" ")[1];
       }
 
-      // Robust cookie parser
-      const cookies = cookieHeader.split(";").reduce((acc: any, curr: any) => {
-        const [key, value] = curr.split("=");
-        if (key && value) {
-          acc[key.trim()] = value.trim();
-        }
-        return acc;
-      }, {} as Record<string, string>);
-
-      const token = cookies.token;
+      // 2. Fallback: try to extract token from cookie header
+      if (!token && socket.handshake.headers.cookie) {
+        const cookieHeader = socket.handshake.headers.cookie;
+        const cookies = cookieHeader.split(";").reduce((acc: any, curr: any) => {
+          const [key, value] = curr.split("=");
+          if (key && value) {
+            acc[key.trim()] = value.trim();
+          }
+          return acc;
+        }, {} as Record<string, string>);
+        token = cookies.token;
+      }
 
       if (!token) {
-        return next(new Error("Authentication error: No token cookie found"));
+        return next(new Error("Authentication error: No token provided"));
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret") as {
