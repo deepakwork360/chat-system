@@ -99,17 +99,12 @@ export const getConversations = async (req: Request, res: Response) => {
       `
       SELECT
         c.id,
-        COALESCE(c.is_group, false) AS is_group,
-        c.name AS group_name,
-        c.avatar_url AS group_avatar_url,
-        c.description AS group_description,
-        c.created_by AS group_created_by,
         c.created_at,
         c.updated_at,
-        CASE WHEN COALESCE(c.is_group, false) = false THEN u.id ELSE NULL END AS other_user_id,
-        CASE WHEN COALESCE(c.is_group, false) = false THEN u.name ELSE NULL END AS other_user_name,
-        CASE WHEN COALESCE(c.is_group, false) = false THEN u.email ELSE NULL END AS other_user_email,
-        CASE WHEN COALESCE(c.is_group, false) = false THEN u.avatar_url ELSE NULL END AS other_user_avatar_url,
+        u.id AS other_user_id,
+        u.name AS other_user_name,
+        u.email AS other_user_email,
+        u.avatar_url AS other_user_avatar_url,
         latest_message.content AS latest_message,
         latest_message.created_at AS latest_message_created_at,
         COALESCE(
@@ -134,10 +129,8 @@ export const getConversations = async (req: Request, res: Response) => {
       LEFT JOIN conversation_members other_member
         ON other_member.conversation_id = c.id
         AND other_member.user_id != $1
-        AND COALESCE(c.is_group, false) = false
       LEFT JOIN users u
         ON u.id = other_member.user_id
-        AND COALESCE(c.is_group, false) = false
       LEFT JOIN LATERAL (
         SELECT content, created_at
         FROM messages
