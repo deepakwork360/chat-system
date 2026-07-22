@@ -72,6 +72,14 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({ status: "ok" });
+});
+
+app.get("/healthz", (req: Request, res: Response) => {
+  res.status(200).json({ status: "ok" });
+});
+
 const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: corsOptions,

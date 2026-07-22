@@ -15,5 +15,5 @@ RUN npm run build
 # Expose port
 EXPOSE 5000
 
-# Start the server
-CMD ["npm", "start"]
+# Start the server directly with node so SIGTERM/SIGINT signals are handled cleanly
+CMD ["node", "dist/server.js"]
