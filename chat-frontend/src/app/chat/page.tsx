@@ -307,6 +307,7 @@ export default function ChatDashboard() {
         await fetchConversations();
       } catch (err) {
         console.error("Failed to authenticate:", err);
+        localStorage.removeItem("token");
         router.push("/login");
       }
     };
