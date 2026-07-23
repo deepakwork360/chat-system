@@ -79,8 +79,8 @@ export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
     btnGradientClass: "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white",
     previewGradient: "from-indigo-600 via-indigo-700 to-purple-600",
     glowShadow: "shadow-indigo-600/25",
-    darkPageBg: "bg-gradient-to-br from-slate-950 via-zinc-950 to-indigo-950/40",
-    lightPageBg: "bg-gradient-to-br from-indigo-50/70 via-slate-50 to-purple-50/50"
+    darkPageBg: "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/60 via-slate-950 to-slate-950",
+    lightPageBg: "bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100/70 via-slate-50 to-slate-50"
   },
   emerald: {
     id: "emerald",
@@ -89,8 +89,8 @@ export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
     btnGradientClass: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white",
     previewGradient: "from-emerald-600 via-teal-600 to-cyan-600",
     glowShadow: "shadow-emerald-600/25",
-    darkPageBg: "bg-gradient-to-br from-zinc-950 via-slate-950 to-emerald-950/40",
-    lightPageBg: "bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-slate-50"
+    darkPageBg: "bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/60 via-zinc-950 to-zinc-950",
+    lightPageBg: "bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-100/70 via-slate-50 to-slate-50"
   },
   sunset: {
     id: "sunset",
@@ -99,8 +99,8 @@ export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
     btnGradientClass: "bg-gradient-to-r from-rose-600 via-orange-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white",
     previewGradient: "from-rose-600 via-orange-600 to-amber-600",
     glowShadow: "shadow-rose-600/25",
-    darkPageBg: "bg-gradient-to-br from-zinc-950 via-slate-950 to-rose-950/40",
-    lightPageBg: "bg-gradient-to-br from-rose-50/70 via-orange-50/40 to-slate-50"
+    darkPageBg: "bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/60 via-zinc-950 to-zinc-950",
+    lightPageBg: "bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-100/70 via-slate-50 to-slate-50"
   },
   violet: {
     id: "violet",
@@ -109,8 +109,8 @@ export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
     btnGradientClass: "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white",
     previewGradient: "from-purple-600 via-fuchsia-600 to-pink-600",
     glowShadow: "shadow-purple-600/25",
-    darkPageBg: "bg-gradient-to-br from-slate-950 via-zinc-950 to-purple-950/40",
-    lightPageBg: "bg-gradient-to-br from-purple-50/70 via-fuchsia-50/40 to-slate-50"
+    darkPageBg: "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/60 via-slate-950 to-slate-950",
+    lightPageBg: "bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/70 via-slate-50 to-slate-50"
   },
   ocean: {
     id: "ocean",
@@ -119,8 +119,8 @@ export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
     btnGradientClass: "bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white",
     previewGradient: "from-blue-600 via-sky-600 to-cyan-500",
     glowShadow: "shadow-blue-600/25",
-    darkPageBg: "bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950/40",
-    lightPageBg: "bg-gradient-to-br from-sky-50/70 via-blue-50/40 to-slate-50"
+    darkPageBg: "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-950/60 via-slate-950 to-slate-950",
+    lightPageBg: "bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-100/70 via-slate-50 to-slate-50"
   },
   crimson: {
     id: "crimson",
@@ -129,8 +129,8 @@ export const THEME_PALETTES: Record<ThemePaletteId, ThemePalette> = {
     btnGradientClass: "bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white",
     previewGradient: "from-red-600 via-rose-700 to-pink-700",
     glowShadow: "shadow-red-600/25",
-    darkPageBg: "bg-gradient-to-br from-zinc-950 via-slate-950 to-red-950/40",
-    lightPageBg: "bg-gradient-to-br from-red-50/70 via-rose-50/40 to-slate-50"
+    darkPageBg: "bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-950/60 via-zinc-950 to-zinc-950",
+    lightPageBg: "bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-100/70 via-slate-50 to-slate-50"
   }
 };
 
@@ -1758,7 +1758,7 @@ export default function ChatDashboard() {
         </section>
 
         {/* CHAT MAIN CONTENT AREA */}
-        <section className={`h-full flex-col z-0 relative bg-card/5 overflow-hidden transition-all duration-200 ${
+        <section className={`h-full flex-col z-0 relative bg-transparent overflow-hidden transition-all duration-200 ${
           activeConversation ? "flex w-full md:flex-1" : "hidden md:flex md:flex-1"
         }`}>
           <AnimatePresence mode="wait">
@@ -1977,8 +1977,10 @@ export default function ChatDashboard() {
                                         msg.message_type === "deleted"
                                           ? "bg-muted/40 text-muted-foreground/70 border border-dashed border-border/60 rounded-2xl"
                                           : isCurrentUser 
-                                            ? `${currentPalette.gradientClass} text-white rounded-tr-none font-medium shadow-md ${currentPalette.glowShadow} border border-white/20` 
-                                            : "bg-gradient-to-br from-card/90 via-muted/80 to-card/90 text-foreground rounded-tl-none border border-border/50 shadow-sm"
+                                            ? `${currentPalette.gradientClass} text-white rounded-2xl rounded-tr-none font-medium shadow-md ${currentPalette.glowShadow} border-0` 
+                                            : themeMode === "dark"
+                                              ? "bg-slate-900/90 text-slate-100 rounded-2xl rounded-tl-none border border-slate-800 shadow-sm"
+                                              : "bg-white text-slate-900 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm"
                                       }`}
                                     >
                                   
