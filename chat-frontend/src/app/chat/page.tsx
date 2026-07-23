@@ -500,6 +500,38 @@ export default function ChatDashboard() {
     setIsOtherUserTyping(false);
   }, [activeConversation]);
 
+  // Helper to open conversation and manage browser history for mobile back gestures
+  const handleOpenConversation = (conv: Conversation) => {
+    setActiveConversation(conv);
+    if (typeof window !== "undefined") {
+      if (!window.history.state?.chatOpen) {
+        window.history.pushState({ chatOpen: true }, "");
+      }
+    }
+  };
+
+  // Helper to close conversation and sync browser history
+  const handleCloseActiveChat = () => {
+    setActiveConversation(null);
+    if (typeof window !== "undefined" && window.history.state?.chatOpen) {
+      window.history.back();
+    }
+  };
+
+  // Handle mobile hardware back button and swipe-back gestures
+  useEffect(() => {
+    const handlePopState = () => {
+      if (activeConversationRef.current) {
+        setActiveConversation(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
@@ -602,7 +634,7 @@ export default function ChatDashboard() {
               fetchConversations(true).then((updatedList) => {
                 const found = updatedList.find((c) => c.id === message.conversation_id);
                 if (found) {
-                  setActiveConversation(found);
+                  handleOpenConversation(found);
                 }
               });
             }
@@ -881,7 +913,7 @@ export default function ChatDashboard() {
       await fetchConversations(true);
 
       // Instantly open the newly created group chat
-      setActiveConversation(res.conversation);
+      handleOpenConversation(res.conversation);
     } catch (err) {
       console.error("Failed to create group:", err);
       toast.error("Failed to create group conversation");
@@ -937,7 +969,7 @@ export default function ChatDashboard() {
         latest_message_created_at: null
       };
       
-      setActiveConversation(selectedConv);
+      handleOpenConversation(selectedConv);
       setSearchQuery("");
       setShowSearchDropdown(false);
     } catch (err: any) {
@@ -1640,7 +1672,7 @@ export default function ChatDashboard() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        onClick={() => setActiveConversation(conv)}
+                        onClick={() => handleOpenConversation(conv)}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer text-left ${
                           isActive 
                             ? `${currentPalette.gradientClass} text-white shadow-lg ${currentPalette.glowShadow} scale-[0.99] font-medium` 
@@ -1752,7 +1784,7 @@ export default function ChatDashboard() {
                       variant="ghost"
                       size="icon"
                       className="md:hidden h-8 w-8 rounded-full text-muted-foreground hover:text-foreground cursor-pointer shrink-0 hover:bg-muted"
-                      onClick={() => setActiveConversation(null)}
+                      onClick={handleCloseActiveChat}
                     >
                       <ArrowLeft className="h-4.5 w-4.5" />
                     </Button>
